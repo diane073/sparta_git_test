@@ -296,4 +296,4 @@ if login.name:
     enemy = in_game.create_unit()
     run_game(player, enemy)
 
-    print(endings.retry())
+    endings.retry()
