@@ -1,5 +1,6 @@
 import time
 import random
+import sys
 
 # 필요한 기능들 함수로 정의하기
 
@@ -7,6 +8,8 @@ import random
 def y_or_n(question):
     while "input yes or no":
         reply = str(input(question+' (y/n): ')).lower().strip()
+        if reply[0] != 'y' or 'n':
+            print("y나 n을 입력해주세요.")
         if reply[0] == 'y':
             return True
         if reply[0] == 'n':
@@ -14,8 +17,8 @@ def y_or_n(question):
 
 
 class Login():  # id 입력하고 확인 및 저장
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
+        self.name = None
 
     def input_name(self):
         self.name = input("플레이어 이름을 입력하세요 >> ")
@@ -23,19 +26,19 @@ class Login():  # id 입력하고 확인 및 저장
     def id_check(self):
         q_id = (f'{self.name}, 이 이름이 맞습니까?')
 
-        if y_or_n(q_id) == True:
-            self.start_game
-        else:
-            id_count = 0
+        if self.name is None:
             while "re-input player name":
-                name = input("다시 플레이어 이름을 입력하세요 >> ")
-                id_count += 1
-                if y_or_n(q_id) == True:
+                self.input_name(("다시 플레이어 이름을 입력하세요 >> "))
+                id_count = 0
+
+                if y_or_n(q_id) is True:
                     self.start_game()
-                    return name
-                elif id_count == 4:
-                    Ending.errorend()
-                    break
+                else:
+                    self.input_name("다시 플레이어 이름을 입력하세요 >> ")
+                    id_count += 1
+                    if id_count == 3:
+                        Ending.errorend()
+                        break
 
     def start_game(self):
         self = print(f'{self.name}(으)로 게임을 시작합니다!')
@@ -45,9 +48,9 @@ class Login():  # id 입력하고 확인 및 저장
 # 플레이어 생성 - 이름 입력
 # 플레이어 공격타입 2가지, 일반, 마법
 
-class Player(Login):  # 플레이어
+class Player():  # 플레이어
     def __init__(self, name, hp, mp, power):
-        self.name = super().__init__(name)
+        self.name = name
         self.max_hp = hp
         self.hp = hp
         self.max_mp = mp
@@ -86,104 +89,90 @@ class Player(Login):  # 플레이어
 
 
 class Monster():
-    def __init__(self, name, hp, power):
+    def __init__(self, name='무서운', hp=100, power=10, attribute='무서운'):
         self.name = name
         self.hp = hp
         self.power = power
-        self.attribute = "무서운"
+        self.attribute = attribute
 
-    def attack(self, damage):
+    def attack(self, player, damage=1):
         self.hp -= damage
-        damage = self.power(10)
+        damage = self.power * damage
 
-        Player.hp = max(Player.hp - damage, 0)
+        player.hp = max(player.hp - damage, 0)
         if damage:
-            print(f"{self.name}의 공격! {Player.name}에게 {damage}의 피해를 입혔습니다.")
+            print(f"{self.name}의 공격! {player.name}에게 {damage}의 피해를 입혔습니다.")
 
     def status_check(self):
-        print(f'몬스터의 hp가 {self.hp} 남았다')
+        print(f'{self.name}몬스터의 hp가 {self.hp} 남았다')
 
 
 class FireMonster(Monster):
     def __init__(self):
-        self.attribute = "불꽃"
-        super().__init__(hp)
+        super().__init__('불꽃', 100, 10, '불꽃')
 
-    def attack(self, damage):
-        super().attack
-        damage = self.power(12)
-
-    def status_check(self):
-        print(f'{self.attribute}몬스터의 hp가 {self.hp} 남았다')
+    def attack(self, player, damage=1.3):
+        super().attack(player, damage)
 
 
 class IceMonster(Monster):
     def __init__(self):
-        self.attribute = "서리"
-        super().__init__(hp)
+        super().__init__('서리', 120, 10, '서리')
 
-    def attack(self, damage):
-        super().attack
-        damage = self.power(15)
-
-    def status_check(self):
-        print(f'{self}몬스터의 hp가 {self.hp} 남았다')
+    def attack(self, player, damage=1.1):
+        super().attack(player, damage)
 
 
 # while을 사용해 종료조건 충족할 때 까지 턴제로 전투 진행
 
 class RunGame():
-    def create_unit(self, enemy):
-        player_status = Player.show_status
-        print(player_status)
+    def create_unit(self):
+        enemy = random.choice([Monster, FireMonster, IceMonster])
+        enemy = enemy()
 
-        enemy_status = enemy.status_check()
-        print(f'{enemy}몬스터와 마주쳤다!')
-        print(enemy_status)
+        print(f'{enemy.name}몬스터와 마주쳤다!')
+        enemy.status_check()
+        return enemy
 
-        def player_turn(self):
-            print(f'{Player.__name__}의 차례')
+    def player_turn(self, player, enemy):
+        print(f'{player.name}의 차례')
 
-            print('< 스킬 선택 >')
-            print('1 물리 공격')
-            print('2 마법 공격')
-            print('3 치유 마법')
-            ps_input = int(input('사용할 스킬의 번호를 입력하세요. : '))
+        print('< 스킬 선택 >')
+        print('1 물리 공격')
+        print('2 마법 공격')
+        print('3 치유 마법')
+        ps_input = int(input('사용할 스킬의 번호를 입력하세요. : '))
 
-            while "1~3을 입력할 때까지":
-                if ps_input == 1:
-                    Player.attack
-                    print(enemy_status)
-                elif ps_input == 2:
-                    Player.magic_attack
-                    print(enemy_status)
-                elif ps_input == 3:
-                    Player.cure
-                    print(enemy_status)
-                else:
-                    print('잘못된 입력! 1 2 3 중 하나를 입력하세요.')
-                    continue
+        while ps_input in range(1, 3):
+            if ps_input == 1:
+                player.attack(enemy)
+                enemy.status_check()
+            elif ps_input == 2:
+                player.magic_attack(enemy)
+                enemy.status_check()
+            elif ps_input == 3:
+                player.cure()
+                enemy.status_check()
+            else:
+                print('잘못된 입력! 1 2 3 중 하나를 입력하세요.')
+                continue
 
-        def enemy_turn(enemy):
-            print(f'{enemy}의 차례')
-            time.sleep(1.5)
-            print(enemy.attack())
+    def enemy_turn(self, player, enemy):
+        print(f'{enemy.name}의 차례')
+        time.sleep(1.5)
+        print(enemy.attack(player))
 
-        def unit_status():
-            time.sleep(1)
-            print(player_status)
-            print(enemy_status)
+    def unit_status(self, player, enemy):
+        time.sleep(1)
+        player.show_status()
+        enemy.status_check()
 
     # 종료 조건 : 플레이어의 패배, 모든 몬스터에게 승리
 
 
 class Ending():
     def __init__(self):
-        self.victory = print(Ending.victoryend)
-        self.defeat = print(Ending.defeatend)
-        self.bad = print(Ending.badend)
-        self.dream = print(Ending.dreamend)
-        self.error = print(Ending.errorend)
+        pass
 
     def victoryend():  # 승리 시
         print("당신은 연인을 지켜내었습니다!")
@@ -211,48 +200,48 @@ class Ending():
     def errorend():
         print("Error!")
         print("갈팡질팡하다 패배했다.")
+
+    def retry():
         if y_or_n("retry? : ") == True:
+            print("새로운 적이 나타났다! 내 이름은..")
+            time.sleep(1)
             print(login.input_name())
+
+            player = Player(login.name, 100, 100, 10)
+            in_game = RunGame()
+            enemy = in_game.create_unit()
+            print(run_game())
         else:
             ("게임을 종료합니다.")
+            time.sleep(2)
+            sys.exit
 
 
 # 게임 실행
-def run_game():
+def run_game(player, enemy):
     while "둘 중 한 유닛hp가 0이 될때까지":
-        print(in_game.player_turn())
+        print(in_game.player_turn(player, enemy))
         time.sleep(2)
-        print(in_game.unit_status())
+        print(in_game.unit_status(player, enemy))
         time.sleep(1)
-        print(in_game.enemy_turn())
+        print(in_game.enemy_turn(player, enemy))
         time.sleep(2)
-        print(in_game.unit_status())
+        print(in_game.unit_status(player, enemy))
         if enemy.hp == 0:
-            print(endings.victory)
+            print(endings.victoryend())
             break
         elif player.hp == 0:
-            print(endings.defeat)
+            print(endings.defeatend())
             break
         else:
-            print(endings.dream)
+            print(endings.dreamend())
             break
-
-    if y_or_n("새로운 게임을 시작할까요? : ") == True:
-        print("새 게임을 시작합니다!")
-        print(login.input_name)
-        run_game
-    else:
-        print("게임을 종료합니다.")
 
 
 """여기부터 게임 실행 코드"""
 
 login = Login()
-player = Player({Login.name}, 100, 100, 10)
-in_game = RunGame()
 endings = Ending()
-enemy = random.choice(Monster, FireMonster, IceMonster)
-
 
 # print하는 함수를 만들기
 
@@ -263,49 +252,26 @@ print("평화로운 서울 한복판에 몬스터가 나타났다!!")
 time.sleep(1.5)
 print("당신은 함께있던 연인을 지켜야합니다!")
 time.sleep(1.5)
-if y_or_n("싸울까?") == True:
-    print("내 이름은..")
-    time.sleep(1)
-    print(login.input_name())
-    if login.name in login:
-        in_game.create_unit()
-        print(run_game)
 
-else:
-    time.sleep(1.5)
+if y_or_n("싸울까?") == False:
     if y_or_n("..정말로 도망갈까?") == True:
         print(endings.bad)
+        exit(0)
     else:
         time.sleep(2)
         print("연인을 보고 용기를 냈다.")
         time.sleep(1)
-        print("내 이름은..")
-        print(login.input_name())
-        if login.name in login:
-            in_game.create_unit()
-            print(run_game)
+
+print("내 이름은..")
+time.sleep(1)
+print(login.input_name())
+if login.name:
+    print(login.id_check())
+
+    player = Player(login.name, 100, 100, 10)
+    in_game = RunGame()
+    enemy = in_game.create_unit()
+    print(run_game())
 
 
-# if yes_or_no("새로운 게임을 시작할까요?") == True:
-#     print("새 게임을 시작합니다!")
-#     print(Id.add_id)
-# else:
-#     print("게임을 종료합니다.")
-
-
-# print(f'{id}(이)가 monster_random 을 만났다!')
-# print("도망쳤다!")
-# print("승리!")
-
-# input문으로 아예..?
-
-# if yes_or_no("새로운 게임을 시작할까요?") == True:
-#     print("새 게임을 시작합니다!")
-#     print(Id.add_id)
-# else:
-#     print("게임을 종료합니다.")
-
-
-# 전투관련
-# 매 전투시 플레이어, 몬스터의 상태정보 출력 (hp mp 등)
-#
+# print(endings.retry())
