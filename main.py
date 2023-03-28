@@ -20,8 +20,6 @@ def run_game(player, enemy):
     while "둘 중 한 유닛hp가 0이 될때까지":
         in_game.player_turn(player, enemy)
         time.sleep(1)
-        in_game.unit_status(player, enemy)
-        time.sleep(0.5)
         if enemy.hp <= 0:
             endings.victoryend()
             break
@@ -53,17 +51,21 @@ class Login():  # id 입력하고 확인 및 저장
         self.name = input("플레이어 이름을 입력하세요 >> ")
 
     def id_check(self):
-        q_id = (f'{self.name}, 이 이름이 맞습니까? :')
+        q_id = (f'{self.name}, 이 이름이 맞습니까? : ')
 
         if y_or_n(q_id) == True:
             self.start_game()
         else:
-            self.input_name("다시 플레이어 이름을 입력하세요 >> ")
-            id_count += 1
-            if id_count == 3:
-                Ending.errorend()
+            while "유저 네임 입력시 까지, 3회입력하면 끝":
+                id_count = 0
+                if id_count < 3:
+                    self.input_name("다시 플레이어 이름을 입력하세요 >> ")
+                    id_count += 1
+                else:
+                    Ending.errorend()
+                    break
 
-        if self.name is None:
+        if self.name == None:
             while "re-input player name":
                 self.input_name(("다시 플레이어 이름을 입력하세요 >> "))
                 id_count = 0
@@ -99,21 +101,22 @@ class Player():  # 플레이어
         enemy.hp = max(enemy.hp - damage, 0)
         if damage:
             time.sleep(1)
-            print(f"{self.name}의 공격! {enemy.name}에게 {damage}의 피해를 입혔습니다.")
+            print(f"{self.name}의 공격! {enemy.name}몬스터에게 {damage}의 피해를 입혔습니다.")
 
     def magic_attack(self, enemy):
         magic_damage = random.randint(self.power - 5, self.power + 15)
         enemy.hp = max(enemy.hp - magic_damage, 0)
         if magic_damage:
             self.mp -= 20
-            print('mp를 20 사용했다.')
+            print('\nmp를 20 사용했다.')
             time.sleep(1)
-            print(f"{self.name}의 마법 공격! {enemy.name}에게 {magic_damage}의 피해를 입혔습니다.")
+            print(f"{self.name}의 마법 공격! {enemy.name}몬스터에게 {magic_damage}의 피해를 입혔습니다.")
 
     def cure(self):
         self.mp -= 10
-        self.cure = random.randint(self.power - 2, self.power + 10)
+        self.cure = random.randint(self.power * 0.7, self.power * 0.9)
         time.sleep(1)
+        self.hp += self.cure
         print(f'치유 마법으로 {self.cure}만큼 치료되었다.')
 
     def show_status(self):
@@ -126,7 +129,7 @@ class Player():  # 플레이어
 
 
 class Monster():
-    def __init__(self, name='무서운', hp=100, power=10, attribute='무서운'):
+    def __init__(self, name='무서운', hp=100, power=15, attribute='무서운'):
         self.name = name
         self.hp = hp
         self.power = power
@@ -146,9 +149,9 @@ class Monster():
 
 class FireMonster(Monster):
     def __init__(self):
-        super().__init__('불꽃', 100, 10, '불꽃')
+        super().__init__('불꽃', 100, 15, '불꽃')
 
-    def attack(self, player, damage=1.3):
+    def attack(self, player, damage=1.5):
         super().attack(player, damage)
 
 
@@ -156,7 +159,7 @@ class IceMonster(Monster):
     def __init__(self):
         super().__init__('서리', 120, 10, '서리')
 
-    def attack(self, player, damage=1.1):
+    def attack(self, player, damage=1.2):
         super().attack(player, damage)
 
 
@@ -197,7 +200,7 @@ class RunGame():
             elif ps_input == 4:
                 print(f"{player.name}은 도망가기로 했다")
                 endings.badend()
-                sys.exit
+                sys.exit()
             else:
                 print('잘못된 입력! 1 2 3 4 중 하나를 입력하세요.')
                 continue
@@ -247,19 +250,21 @@ class Ending():
         print("갈팡질팡하다 패배했다.")
 
     def retry(self):
-        if y_or_n("retry? : ") == True:
+        if y_or_n("\nretry?ß ") == True:
             print("\n새로운 적이 나타났다! 내 이름은..")
             time.sleep(1)
             login.input_name()
 
-            player = Player(login.name, 100, 100, 10)
+            player = Player(login.name, 100, 100, 20)
             in_game = RunGame()
             enemy = in_game.create_unit()
             run_game(player, enemy)
+            endings.retry
+
         else:
             ("게임을 종료합니다.")
             time.sleep(2)
-            sys.exit
+            sys.exit()
 
 
 # 게임 실행
@@ -281,8 +286,8 @@ time.sleep(1.5)
 
 if y_or_n("싸울까?") == False:
     if y_or_n("\n..정말로 도망갈까?") == True:
-        print(endings.bad)
-        exit(0)
+        endings.badend()
+        sys.exit()
     else:
         time.sleep(1)
         print("연인을 보고 용기를 냈다.")
@@ -294,9 +299,8 @@ login.input_name()
 if login.name:
     login.id_check()
 
-    player = Player(login.name, 100, 100, 30)
+    player = Player(login.name, 100, 100, 20)
     in_game = RunGame()
     enemy = in_game.create_unit()
     run_game(player, enemy)
-
     endings.retry()
