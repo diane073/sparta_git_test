@@ -16,17 +16,21 @@ def sign_up_view(request):
         else:
             return render(request, 'user/signup.html')
     elif request.method == 'POST':
-        username = request.POST.get('username', None)
-        password = request.POST.get('password', None)
-        password2 = request.POST.get('password2', None)
-        bio = request.POST.get('bio', None)
+        username = request.POST.get('username', "")
+        password = request.POST.get('password', "")
+        password2 = request.POST.get('password2', "")
+        bio = request.POST.get('bio', "")
 
         if password != password2:
-            return render(request, 'user/signup.html')
+            #패스워드가 같지 않다고 알람
+            return render(request, 'user/signup.html', {'error':"패스워드를 확인해주세요"})
         else:
+            if username == '' or password == '':
+                return render(request, 'user/signup.html', {'error':"사용자 이름과 비밀번호는 필수!"})
+
             exist_user = get_user_model().objects.filter(username=username)
             if exist_user:  # 입력받은 것과 데이터이름이 같으면 warning message
-                return redirect('/sign-up')
+                return render(request, 'user/signup.html',{'error':"사용자가 존재합니다!"})
             else:  # 일치하는 것이 없으면 가입 완료!
                 UserModel.objects.create(
                     username=username, password=password, bio=bio)
@@ -36,8 +40,8 @@ def sign_up_view(request):
 @csrf_exempt
 def sign_in_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username', None)
-        password = request.POST.get('password', None)
+        username = request.POST.get('username', '')
+        password = request.POST.get('password', '')
 
         me = auth.authenticate(request, username=username, password=password)
 
@@ -45,7 +49,7 @@ def sign_in_view(request):
             auth.login(request, me)
             return redirect('/')
         else:
-            return redirect('/sign-in')
+            return render(request, 'user/signin.html',{'error':"유저이름 혹은 패스워드를 확인해주세요"})
 
     elif request.method == 'GET':
         user = request.user.is_authenticated
